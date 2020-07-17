@@ -1,0 +1,19 @@
+[package]
+name = "monstermaker_core"
+version = "2.0.1"
+authors = ["The Monster Maker Team"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/monstermaker429/monstermaker_core"
+readme = "README.md"
+description = "Core types for the Monster Maker ecosystem."
+
+[features]
+default = ["bestiary"]
+bestiary = []
+
+[dependencies]
+phf = "0.8.0"
+
+[dev-dependencies]
+phf = { version = "0.8.0", features = ["macros"] }
