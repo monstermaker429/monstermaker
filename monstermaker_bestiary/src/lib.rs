@@ -1,17 +1,24 @@
 use monstermaker_core::{Id, Name};
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
-pub trait BestiarySpeciesData {
+pub trait BestiarySpeciesData<T, U, V> where
+    T: Name,
+    U: Name,
+    V: Name {
     fn category(&self) -> &str;
     fn description(&self) -> &str;
     fn weight_in_hectograms(&self) -> u16;
     fn height_in_decimeters(&self) -> u16;
-    fn color<T: Name>(&self) -> &T;
-    fn shape<T: Name>(&self) -> &T;
-    fn habitat<T: Name>(&self) -> &T;
+    fn color(&self) -> &T;
+    fn shape(&self) -> &U;
+    fn habitat(&self) -> &V;
 }
 
-trait Species: BestiarySpeciesData + Id + Name {}
+pub trait Species<T, U, V>: BestiarySpeciesData<T, U, V> + Id + Name where
+    T: Name,
+    U: Name,
+    V: Name {}
 
 pub enum Status {
     None,
@@ -19,30 +26,43 @@ pub enum Status {
     Owned,
 }
 
-pub struct SeenEntry {
-    pub name: &'static str,
+pub struct SeenEntry<'a> {
+    pub name: &'a str,
 }
 
-pub struct OwnedEntry {
-    pub category: &'static str,
-    pub description: &'static str,
+pub struct OwnedEntry<'a> {
+    pub category: &'a str,
+    pub description: &'a str,
     pub weight_in_hectograms: u16,
     pub height_in_decimeters: u16,
 }
 
 pub struct Entry<'a> {
     pub status: &'a Status,
-    pub seen_entry: Option<SeenEntry>,
-    pub owned_entry: Option<OwnedEntry>,
+    pub seen_entry: Option<SeenEntry<'a>>,
+    pub owned_entry: Option<OwnedEntry<'a>>,
 }
 
-pub struct Bestiary<S: impl Species> {
-    species: HashMap<u16, &'static S>,
-    species_statuses: HashMap<u16, Status>,
+pub struct Bestiary<'a, S, T, U, V> where 
+    S: BestiarySpeciesData<T, U, V> + Id + Name, 
+    T: Name, 
+    U: Name, 
+    V: Name {
+    species: HashMap<u32, &'a S>,
+    species_statuses: HashMap<u32, Status>,
+    // PhantomData to reconcile type parameters that are unused in this
+    // struct.
+    phantom_t: PhantomData<T>,
+    phantom_u: PhantomData<U>,
+    phantom_v: PhantomData<V>,
 }
 
-impl Bestiary<S: impl Species> {
-    pub fn new(species_list: Vec<&'static Species>) -> Bestiary {
+impl <'a, S, T, U, V> Bestiary<'a, S, T, U, V> where 
+    S: BestiarySpeciesData<T, U, V> + Id + Name, 
+    T: Name, 
+    U: Name, 
+    V: Name {
+    pub fn new(species_list: Vec<&'a S>) -> Bestiary<'a, S, T, U, V> {
         let mut species_map = HashMap::new();
         let mut species_statuses_map = HashMap::new();
         for species in species_list {
@@ -52,12 +72,16 @@ impl Bestiary<S: impl Species> {
         Bestiary {
             species: species_map,
             species_statuses: species_statuses_map,
+            phantom_t: PhantomData,
+            phantom_u: PhantomData,
+            phantom_v: PhantomData,
         }
     }
     
-    pub fn view_species(&self, id: &u16) -> Option<Entry> {
+    pub fn view_species(&self, id: &u32) -> Option<Entry> {
         let status = self.species_statuses.get(id).unwrap_or(&Status::None);
-        match (status, self.species.get(id)) {
+        let species_or = self.species.get(id);
+        match (status, species_or) {
             (_, None) => None,
             (Status::None, Some(_species)) => Some(Entry {
                 status: status,
@@ -86,7 +110,10 @@ impl Bestiary<S: impl Species> {
         }
     }
     
-    pub fn see(&mut self, species: &impl Species) {
+    pub fn see(&mut self, species: &(impl BestiarySpeciesData<T, U, V> + Id + Name)) where
+        T: Name,
+        U: Name,
+        V: Name {
         let id = &species.id();
         match self.species_statuses.get(id).unwrap_or(&Status::Owned) {
             Status::None => {
@@ -96,7 +123,10 @@ impl Bestiary<S: impl Species> {
         }
     }
     
-    pub fn own(&mut self, species: &impl Species) {
+    pub fn own(&mut self, species: &(impl BestiarySpeciesData<T, U, V> + Id + Name)) where
+        T: Name,
+        U: Name,
+        V: Name {
         let id = &species.id();
         match self.species_statuses.get(id).unwrap_or(&Status::Owned) {
             Status::Owned => {},
@@ -109,13 +139,76 @@ impl Bestiary<S: impl Species> {
 
 #[cfg(test)]
 mod tests {
-    static TYPE_A: Type = Type {
-        
+    use crate::{Bestiary, BestiarySpeciesData};
+    use monstermaker_core::{Id, Name};
+    
+    struct Color {}
+    struct Shape {}
+    struct Habitat {}
+    
+    impl Name for Color {
+        fn name(&self) -> &str {
+            "color"
+        }
     }
-    static SPECIES_A: Species = Species {
-        
+    impl Name for Shape {
+        fn name(&self) -> &str {
+            "shape"
+        }
+    }
+    impl Name for Habitat {
+        fn name(&self) -> &str {
+            "habitat"
+        }
+    }
+    
+    struct Species {}
+    
+    impl Id for Species {
+        fn id(&self) -> u32 {
+            
+        }
+    }
+    impl Name for Species {
+        fn name(&self) -> &str {
+            "species"
+        }
     }
     
     #[test]
-    fn 
+    fn foo() {
+        struct Dummy {}
+        
+        impl Name for Dummy {
+            fn name(&self) -> &str {
+                "hello world"
+            }
+        }
+        
+        struct Species {}
+        
+        impl Id for Species {
+            fn id(&self) -> u32 {
+                0
+            }
+        }
+        
+        impl Name for Species {
+            fn name(&self) -> &str {
+                "foo"
+            }
+        }
+        
+        impl BestiarySpeciesData<Dummy, Dummy, Dummy> for Species {
+            fn category(&self) -> &str { "bar"}
+            fn description(&self) -> &str {"baz"}
+            fn height_in_decimeters(&self) -> u16 {1}
+            fn weight_in_hectograms(&self) -> u16 {2}
+            fn color(&self) -> &Dummy {&Dummy{}}
+            fn shape(&self) -> &Dummy {&Dummy {}}
+            fn habitat(&self) -> &Dummy {&Dummy{}}
+        }
+        
+        let b = Bestiary::new(vec![&Species{}]);
+    }
 }

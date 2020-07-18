@@ -39,16 +39,16 @@ pub trait Name {
 /// use monstermaker_core::Id;
 ///
 /// struct Foo {
-///     id: u32,
+///     id: u16,
 /// }
 ///
 /// impl Id for Foo {
-///     fn id(&self) -> u32 {
+///     fn id(&self) -> u16 {
 ///         self.id
 ///     }
 /// }
 /// ```
 pub trait Id {
     /// Returns the object's id.
-    fn id(&self) -> u32;
+    fn id(&self) -> u16;
 }
