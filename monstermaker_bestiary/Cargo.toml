@@ -1,0 +1,8 @@
+[package]
+name = "monstermaker_bestiary"
+version = "0.1.0"
+authors = ["The Monster Maker Team"]
+edition = "2018"
+
+[dependencies]
+monstermaker_core = "2.0.1"

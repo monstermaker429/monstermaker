@@ -24,8 +24,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9f8082297d534141b30c8d39e9b1773713ab50fdbe4ff30f750d063b3bfd701"
 
 [[package]]
+name = "monstermaker_bestiary"
+version = "0.1.0"
+dependencies = [
+ "monstermaker_core 2.0.1",
+]
+
+[[package]]
 name = "monstermaker_core"
 version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4dc83ae73751fb7f0ff6957a75522b1f86f113c6b79b8b0c9f1fea078185f02f"
+dependencies = [
+ "phf",
+]
+
+[[package]]
+name = "monstermaker_core"
+version = "3.0.0"
 dependencies = [
  "phf",
 ]
